@@ -11,7 +11,7 @@ private var scrollViewKey : UInt8 = 0
 
 extension UIViewController {
     
-    public func setupKeyboardNotifcationListenerForScrollView(_ scrollView: UIScrollView) {
+    public func setupKeyboardNotifcationListenerForScrollView(scrollView: UIScrollView) {
         NotificationCenter.default.addObserver(self, selector: #selector(UIViewController.keyboardWillShow(_:)), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(UIViewController.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
         internalScrollView = scrollView
@@ -22,7 +22,7 @@ extension UIViewController {
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
-    fileprivate var internalScrollView: UIScrollView! {
+    private var internalScrollView: UIScrollView! {
         get {
             return objc_getAssociatedObject(self, &scrollViewKey) as? UIScrollView
         }
@@ -31,11 +31,13 @@ extension UIViewController {
         }
     }
     
-    func keyboardWillShow(_ notification: Notification) {
-        let userInfo = (notification as NSNotification).userInfo as! Dictionary<String, AnyObject>
+    func keyboardWillShow(_ notification: NSNotification) {
+        let userInfo = notification.userInfo as! Dictionary<String, AnyObject>
         let animationDuration = userInfo[UIKeyboardAnimationDurationUserInfoKey] as! TimeInterval
+        let animationCurve = userInfo[UIKeyboardAnimationCurveUserInfoKey] as! Int
         let keyboardFrame = userInfo[UIKeyboardFrameEndUserInfoKey]?.cgRectValue
         let keyboardFrameConvertedToViewFrame = view.convert(keyboardFrame!, from: nil)
+        let curveAnimationOption = UIViewAnimationOptions(rawValue: UInt(animationCurve))
         let options = UIViewAnimationOptions.beginFromCurrentState
         UIView.animate(withDuration: animationDuration, delay: 0, options:options, animations: { () -> Void in
             let insetHeight = (self.internalScrollView.frame.height + self.internalScrollView.frame.origin.y) - keyboardFrameConvertedToViewFrame.origin.y
@@ -45,9 +47,13 @@ extension UIViewController {
         }
     }
     
-    func keyboardWillHide(_ notification: Notification) {
-        let userInfo = (notification as NSNotification).userInfo as! Dictionary<String, AnyObject>
+    func keyboardWillHide(_ notification: NSNotification) {
+        let userInfo = notification.userInfo as! Dictionary<String, AnyObject>
         let animationDuration = userInfo[UIKeyboardAnimationDurationUserInfoKey] as! TimeInterval
+        let animationCurve = userInfo[UIKeyboardAnimationCurveUserInfoKey] as! Int
+        let keyboardFrame = userInfo[UIKeyboardFrameEndUserInfoKey]?.cgRectValue
+        let keyboardFrameConvertedToViewFrame = view.convert(keyboardFrame!, from: nil)
+        let curveAnimationOption = UIViewAnimationOptions(rawValue: UInt(animationCurve))
         let options = UIViewAnimationOptions.beginFromCurrentState
         UIView.animate(withDuration: animationDuration, delay: 0, options:options, animations: { () -> Void in
             self.internalScrollView.contentInset = UIEdgeInsetsMake(0, 0, 0, 0)
